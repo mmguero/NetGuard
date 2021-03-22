@@ -333,6 +333,53 @@ The native code is built as part of the Android Studio project.
 It is expected that you can solve build problems yourself, so there is no support on building.
 If you cannot build yourself, there are prebuilt versions of NetGuard available [here](https://github.com/M66B/NetGuard/releases).
 
+You can also build an **unofficial**, **self-signed** APK from source using [Docker Android Build Box](https://github.com/mingchen/docker-android-build-box):
+
+```
+# pull the mingc/android-build-box docker image
+$ docker pull mingc/android-build-box:latest
+...
+
+# navigate to the directory containing the source code
+$ cd ./NetGuard
+
+# generate a keystore to use for the self-signed APK and write keystore.properties
+$ docker run -it --rm -u $(id -u) -v `pwd`:/project mingc/android-build-box bash -c 'cd /project; keytool -genkey -v -keystore release.keystore -alias netguard-release -keyalg RSA -keysize 2048 -validity 10000 -keypass changeit -storepass changeit'
+What is your first and last name?
+  [Unknown]:  Roland Deschain
+What is the name of your organizational unit?
+  [Unknown]:  
+What is the name of your organization?
+  [Unknown]:  Tet Corporation
+What is the name of your City or Locality?
+  [Unknown]:  
+What is the name of your State or Province?
+  [Unknown]:  
+What is the two-letter country code for this unit?
+  [Unknown]:  US
+Is CN=Roland Deschain, OU=Unknown, O=Tet Corporation, L=Unknown, ST=Unknown, C=US correct?
+  [no]:  yes
+
+Generating 2,048 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 10,000 days
+    for: CN=Roland Deschain, OU=Unknown, O=Tet Corporation, L=Unknown, ST=Unknown, C=US
+[Storing release.keystore]
+
+Warning:
+The JKS keystore uses a proprietary format. It is recommended to migrate to PKCS12 which is an industry standard format using "keytool -importkeystore -srckeystore release.keystore -destkeystore release.keystore -deststoretype pkcs12".
+
+$ echo -e 'storePassword=changeit\nkeyPassword=changeit\nkeyAlias=netguard-release\nstoreFile=../release.keystore' > keystore.properties
+
+# run the build
+$ docker run --rm -v $(pwd):/project mingc/android-build-box bash -c 'cd /project; bash ./gradlew assembleRelease'
+...
+BUILD SUCCESSFUL in 11m 15s
+108 actionable tasks: 75 executed, 33 up-to-date
+
+# check the APK file(s) built
+$ ls -lh ./app/build/outputs/apk/release/*.apk
+-rw-r--r-- 1 root root 2.6M Jul  7 08:01 ./app/build/outputs/apk/release/NetGuard-v2.283-release.apk
+```
+
 *Translating*
 
 * Translations to other languages are welcomed
